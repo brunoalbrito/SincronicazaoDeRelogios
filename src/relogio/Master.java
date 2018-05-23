@@ -9,6 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Master {
+    
+    public long horaInicial;
 
     public static void main(String[] args) {
 
@@ -49,5 +51,14 @@ public class Master {
         } catch (IOException ex) {
             Logger.getLogger(Master.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    
+    public static long getHora(){
+        return System.currentTimeMillis();
+    }
+    
+    public static void corrigeHora(){
+        
     }
 }
