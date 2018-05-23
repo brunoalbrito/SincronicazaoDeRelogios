@@ -11,6 +11,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,26 +26,31 @@ public class GetHora extends TimerTask {
     @Override
     public void run() {
         try {
+            Map<String, Integer> slaves = new HashMap<>();
+            slaves.put("Slave1", 9877);
+            slaves.put("Slave2", 9878);
+            slaves.put("Slave3", 9879);
             //Cria o socket e converte para o objeto IP
-            DatagramSocket clientSocket = new DatagramSocket();
+            DatagramSocket serverSocket = new DatagramSocket(9876);
             InetAddress IPAddress = InetAddress.getByName("localhost");
             byte[] sendData = new byte[1024];
             byte[] receiveData = new byte[1024];
 
-            String sentence = "Oi";
-            sendData = sentence.getBytes();
+            String send = "getHora";
+            sendData = send.getBytes();
+            for (Map.Entry<String, Integer> entry : slaves.entrySet()) {
+                int port = entry.getValue();
+                DatagramPacket sendGetData
+                        = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+                serverSocket.send(sendGetData);
 
-            //Cria o pacote de envio
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-            //Envia
-            clientSocket.send(sendPacket);
-
-            //Resposta
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
-            String modifiedSentence = new String(receivePacket.getData());
-            System.out.println("FROM SERVER:" + modifiedSentence);
-            clientSocket.close();
+                //Resposta
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                String modifiedSentence = new String(receivePacket.getData());
+                System.out.println("O escravo: " + entry.getKey() + ", respondeu " + modifiedSentence);
+            }
+            serverSocket.close();
 
         } catch (SocketException ex) {
             Logger.getLogger(Slave.class.getName()).log(Level.SEVERE, null, ex);

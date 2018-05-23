@@ -13,6 +13,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static relogio.Slave.getHora;
+
+
 
 /**
  *
@@ -22,32 +25,42 @@ public class Slave1 {
 
     public static void main(String[] args) {
         try {
+            //        Timer timer = new Timer();
+            //        timer.schedule(new GetHora(), 0, 2000);
+
             //Cria o socket e converte para o objeto IP
-            DatagramSocket clientSocket = new DatagramSocket();
-            InetAddress IPAddress = InetAddress.getByName("localhost");
+            DatagramSocket serverSocket = new DatagramSocket(9878);
             byte[] sendData = new byte[1024];
             byte[] receiveData = new byte[1024];
-
-            String sentence = "Oi";
-            sendData = sentence.getBytes();
-            //Cria o pacote de envio
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, 9876);
-            //Envia
-            clientSocket.send(sendPacket);
-
-            //Resposta
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            clientSocket.receive(receivePacket);
-            String modifiedSentence = new String(receivePacket.getData());
-            System.out.println("FROM SERVER:" + modifiedSentence);
-            clientSocket.close();
+            System.out.println("Slave 1 Rodando");
+            while (true) {
+                //Objeto para pegar os pacotes que o cliente envia
+                DatagramPacket receivePacket
+                        = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                //Transforma em string
+                String sentence = new String(receivePacket.getData());
+                if (sentence.toUpperCase().trim().equals("GETHORA")) {
+                    System.out.println("Pedia getData");
+                    //************Criar resposta*******************************
+                    //Pega o endereco para onde pode responder
+                    InetAddress IPAddress = receivePacket.getAddress();
+                    //Pega a porta de resposta
+                    int port = receivePacket.getPort();
+                    String send = String.valueOf(getHora());
+                    sendData = send.getBytes();
+                    DatagramPacket sendPacket
+                            = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+                    serverSocket.send(sendPacket);
+                }
+            }
 
         } catch (SocketException ex) {
-            Logger.getLogger(Slave1.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Slave.class.getName()).log(Level.SEVERE, null, ex);
         } catch (UnknownHostException ex) {
-            Logger.getLogger(Slave1.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Slave.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(Slave1.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Slave.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
