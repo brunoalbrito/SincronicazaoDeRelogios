@@ -38,10 +38,27 @@ public class Cliente {
         return dataLocal;
     }
 
+    public int getPorta() {
+        return porta;
+    }
+
+    public void setPorta(int porta) {
+        this.porta = porta;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    
     public void setDataLocal(String dataLocal) {
 
         try {
-            this.dataLocal = format.parse(dataLocal);
+            this.dataLocal = format.parse(dataLocal.split(" ")[3]);
         } catch (ParseException ex) {
             Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
         }

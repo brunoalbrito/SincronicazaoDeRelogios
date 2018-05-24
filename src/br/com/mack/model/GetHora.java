@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,10 +29,12 @@ public class GetHora extends TimerTask {
 
     private Date horaInicial;
     private Map<String, Integer> slaves = new HashMap<>();
+    private double avg = 0;
+    private int avg_slaves = 1;
 
     @Override
     public void run() {
-//        System.out.println("Chamou aqui");
+        ArrayList<Cliente> clientes = new ArrayList<>();
         try {
             carregaSlaves();
 
@@ -44,6 +47,7 @@ public class GetHora extends TimerTask {
             String send = "getHora";
             sendData = send.getBytes();
             for (Map.Entry<String, Integer> entry : slaves.entrySet()) {
+                avg_slaves++;
                 int port = entry.getValue();
                 DatagramPacket sendGetData
                         = new DatagramPacket(sendData, sendData.length, IPAddress, port);
@@ -53,14 +57,36 @@ public class GetHora extends TimerTask {
                 DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
                 String response = new String(receivePacket.getData());
-//                System.out.println("O escravo: " + entry.getKey() + " , respondeu " + modifiedSentence);
-//                new FileUtil().writeFile("masterGetHora.txt", "O escravo: " + entry.getKey() + " , respondeu " + modifiedSentence);
                 String msg = entry.getKey().trim() + "\\Msg: " + response.trim();
                 System.out.println(msg);
+                Cliente c = new Cliente();
+                c.setDataLocal(response.trim());
+                c.setEstado((response != null));
+                c.setNome(entry.getKey());
+                c.setPorta(entry.getValue());
+                clientes.add(c);
                 FileUtil.writeFile("MasterGetHoraResponces" + entry.getKey().trim() + ".txt", msg);
             }
-            serverSocket.close();
 
+            for (Cliente cliente : clientes) {
+                if (cliente.isEstado() == true) {
+                    int diferenca = diferentaDeTempos(horaInicial, cliente.getDataLocal());
+                    avg += diferenca;
+                }
+            }
+
+            avg = avg / avg_slaves;
+
+            Date masterAuxiliarDate = minutosParaData(horaInicial, avg);
+            System.out.println("Nova data: " + masterAuxiliarDate);
+
+            String msg = "sincroniza-" + masterAuxiliarDate.toString();
+            DatagramPacket sendPacket = new DatagramPacket(msg.getBytes(), msg.getBytes().length, IPAddress, 9877);
+            serverSocket.send(sendPacket);
+
+            horaInicial = masterAuxiliarDate;
+            serverSocket.close();
+            System.out.println("Acabou no master");
         } catch (SocketException ex) {
             Logger.getLogger(Slave.class.getName()).log(Level.SEVERE, null, ex);
         } catch (UnknownHostException ex) {
@@ -87,9 +113,37 @@ public class GetHora extends TimerTask {
     public void setHoraInicial(Date horaInicial) {
         this.horaInicial = horaInicial;
     }
-    
-    public void diferentaDeTempos(Date dataLocal, Date dataCliente){
-        
+
+    public int diferentaDeTempos(Date dataLocal, Date dataCliente) {
+        int diferenca = 0;
+
+        Calendar aux = Calendar.getInstance();
+        aux.setTime(dataCliente);
+        int cliente_hora = aux.get(Calendar.HOUR_OF_DAY);
+        int cliente_minutos = aux.get(Calendar.MINUTE);
+
+        aux.setTime(dataLocal);
+        int master_hora = aux.get(Calendar.HOUR_OF_DAY);
+        System.out.println(master_hora);
+        int master_minutos = aux.get(Calendar.MINUTE);
+
+        int diferenca_hora = cliente_hora - master_hora;
+
+        //por que multiplica por 60
+        diferenca = (diferenca_hora * 60) + (cliente_minutos - master_minutos);
+
+        return diferenca;
+    }
+
+    public static Date minutosParaData(Date date, double tempoDiferencaMaster) {
+        Date resultado = null;
+
+        Calendar aux = Calendar.getInstance();
+        aux.setTime(date);
+        aux.add(Calendar.MINUTE, (int) Math.round(tempoDiferencaMaster));
+        resultado = aux.getTime();
+
+        return resultado;
     }
 
 }

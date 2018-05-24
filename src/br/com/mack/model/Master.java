@@ -11,7 +11,7 @@ public class Master {
 
     public Date horaInicial;
     public String clientFileName;
-    private SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+    private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 
     public Master(String horaInicial) {
         System.out.println("Usou esse sucesso");
@@ -23,13 +23,15 @@ public class Master {
     }
 
     public void start() {
-        Timer timerSlave = new Timer();
         GetHora getHora = new GetHora();
-        getHora.setHoraInicial(horaInicial);
-        timerSlave.schedule(getHora, 0, 3000);
-    }
-
-    public static void corrigeHora() {
-
+        while (true) {
+            try {
+                Thread.sleep(8000);
+                getHora.setHoraInicial(horaInicial);
+                getHora.run();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Master.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 }

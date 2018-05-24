@@ -15,7 +15,7 @@ public class Principal {
             master.start();
         } 
         else if (args[0].trim().equals("-s")) {
-            new Slave(Integer.parseInt(args[1]), args[2]).start();
+            new Slave(Integer.parseInt(args[1]), args[2]).run();
         }
     }
 
