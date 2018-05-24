@@ -3,14 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package relogio;
+package br.com.mack.model;
 
+import br.com.mack.util.FileUtil;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,18 +23,31 @@ import java.util.logging.Logger;
  *
  * @author Bruno
  */
-public class Slave {
+public class Slave extends Thread {
 
-    public static void main(String[] args) {
+    private final int id;
+    private Date localTime;
+
+    public Slave(int id, String localTime) {
+        this.id = id;
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
         try {
-            //        Timer timer = new Timer();
-            //        timer.schedule(new GetHora(), 0, 2000);
+            this.localTime = format.parse(localTime);
+        } catch (ParseException ex) {
+            Logger.getLogger(Slave.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
 
             //Cria o socket e converte para o objeto IP
-            DatagramSocket serverSocket = new DatagramSocket(9877);
+            DatagramSocket serverSocket = new DatagramSocket(9877 + id);
             byte[] sendData = new byte[1024];
             byte[] receiveData = new byte[1024];
-            System.out.println("Slave 2 Rodando");
+            System.out.println("**Slave " + id + " rodando..");
+            System.out.println(localTime);
             while (true) {
                 //Objeto para pegar os pacotes que o cliente envia
                 DatagramPacket receivePacket
@@ -40,12 +57,13 @@ public class Slave {
                 String sentence = new String(receivePacket.getData());
                 if (sentence.toUpperCase().trim().equals("GETHORA")) {
                     System.out.println("Pediu getData");
+                    FileUtil.writeFile("slave" + id + "getHora.txt", "Hora:" + localTime);
                     //************Criar resposta*******************************
                     //Pega o endereco para onde pode responder
                     InetAddress IPAddress = receivePacket.getAddress();
                     //Pega a porta de resposta
                     int port = receivePacket.getPort();
-                    String send = String.valueOf(getHora());
+                    String send = String.valueOf(localTime);
                     sendData = send.getBytes();
                     DatagramPacket sendPacket
                             = new DatagramPacket(sendData, sendData.length, IPAddress, port);
@@ -62,7 +80,4 @@ public class Slave {
         }
     }
 
-    public static long getHora() {
-        return System.currentTimeMillis();
-    }
 }
