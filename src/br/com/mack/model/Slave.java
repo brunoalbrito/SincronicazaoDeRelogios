@@ -40,7 +40,7 @@ public class Slave {
     }
 
     public void run() {
-        System.out.println("*******DATA DE ENTRADA" + localTime);
+        System.out.println("*******DATA DE ENTRADA " + localTime);
         try {
             //Cria o socket e converte para o objeto IP
             DatagramSocket serverSocket = new DatagramSocket(9877 + id);

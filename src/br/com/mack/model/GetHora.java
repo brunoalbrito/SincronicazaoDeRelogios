@@ -47,7 +47,6 @@ public class GetHora extends TimerTask {
             String send = "getHora";
             sendData = send.getBytes();
             for (Map.Entry<String, Integer> entry : slaves.entrySet()) {
-                avg_slaves++;
                 int port = entry.getValue();
                 DatagramPacket sendGetData
                         = new DatagramPacket(sendData, sendData.length, IPAddress, port);
@@ -71,6 +70,7 @@ public class GetHora extends TimerTask {
             for (Cliente cliente : clientes) {
                 if (cliente.isEstado() == true) {
                     int diferenca = diferentaDeTempos(horaInicial, cliente.getDataLocal());
+                    avg_slaves++;
                     avg += diferenca;
                 }
             }
@@ -80,9 +80,12 @@ public class GetHora extends TimerTask {
             Date masterAuxiliarDate = minutosParaData(horaInicial, avg);
             System.out.println("Nova data: " + masterAuxiliarDate);
 
-            String msg = "sincroniza-" + masterAuxiliarDate.toString();
-            DatagramPacket sendPacket = new DatagramPacket(msg.getBytes(), msg.getBytes().length, IPAddress, 9877);
-            serverSocket.send(sendPacket);
+            for (Cliente cliente : clientes) {
+                String msg = "sincroniza-" + masterAuxiliarDate.toString();
+                System.out.println(cliente.getPorta());
+                DatagramPacket sendPacket = new DatagramPacket(msg.getBytes(), msg.getBytes().length, IPAddress, cliente.getPorta());
+                serverSocket.send(sendPacket);
+            }
 
             horaInicial = masterAuxiliarDate;
             serverSocket.close();
@@ -124,7 +127,6 @@ public class GetHora extends TimerTask {
 
         aux.setTime(dataLocal);
         int master_hora = aux.get(Calendar.HOUR_OF_DAY);
-        System.out.println(master_hora);
         int master_minutos = aux.get(Calendar.MINUTE);
 
         int diferenca_hora = cliente_hora - master_hora;

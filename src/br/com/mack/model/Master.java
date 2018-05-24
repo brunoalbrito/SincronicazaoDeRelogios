@@ -3,7 +3,6 @@ package br.com.mack.model;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,7 +13,7 @@ public class Master {
     private final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 
     public Master(String horaInicial) {
-        System.out.println("Usou esse sucesso");
+        System.out.println("Master Inicalizaco com sucesso");
         try {
             this.horaInicial = format.parse(horaInicial);
         } catch (ParseException ex) {
